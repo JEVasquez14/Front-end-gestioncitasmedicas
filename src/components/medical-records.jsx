@@ -1,0 +1,117 @@
+import React, { useState, useEffect } from "react"
+import { Label } from "./ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Badge } from "./ui/badge"
+import { FileText } from "lucide-react"
+import { mockPatients, mockMedicalRecords } from "../data/mock-data"
+
+export function MedicalRecords() {
+  const [selectedPatientId, setSelectedPatientId] = useState("")
+  const [medicalRecords, setMedicalRecords] = useState([])
+
+  useEffect(() => {
+    if (selectedPatientId) {
+      // Filtrar registros médicos por paciente
+      const filteredRecords = mockMedicalRecords.filter(
+        (record) => record.appointment.patient.id.toString() === selectedPatientId,
+      )
+      setMedicalRecords(filteredRecords)
+    }
+  }, [selectedPatientId])
+
+  const selectedPatient = mockPatients.find((p) => p.id.toString() === selectedPatientId)
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Historial Clínico</CardTitle>
+          <CardDescription>Consulta el historial médico completo de los pacientes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="patient">Paciente</Label>
+              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockPatients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id.toString()}>
+                      {patient.name} - {patient.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedPatient && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold">{selectedPatient.name}</h3>
+                <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-gray-600">
+                  <p>Email: {selectedPatient.email}</p>
+                  <p>Teléfono: {selectedPatient.phone}</p>
+                  <p>Fecha de nacimiento: {new Date(selectedPatient.birthDate).toLocaleDateString()}</p>
+                  <p>Edad: {new Date().getFullYear() - new Date(selectedPatient.birthDate).getFullYear()} años</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedPatientId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Registros Médicos</CardTitle>
+            <CardDescription>Historial de consultas y tratamientos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {medicalRecords.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No hay registros médicos para este paciente</div>
+            ) : (
+              <div className="space-y-4">
+                {medicalRecords
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((record) => (
+                    <div key={record.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">
+                            Consulta - {new Date(record.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <Badge variant="outline">{record.appointment.doctor.name}</Badge>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <div>
+                          <h4 className="font-medium text-sm text-gray-700">Diagnóstico:</h4>
+                          <p className="text-sm">{record.diagnosis}</p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-sm text-gray-700">Tratamiento:</h4>
+                          <p className="text-sm">{record.treatment}</p>
+                        </div>
+
+                        {record.notes && (
+                          <div>
+                            <h4 className="font-medium text-sm text-gray-700">Notas adicionales:</h4>
+                            <p className="text-sm">{record.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+} 
