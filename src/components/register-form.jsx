@@ -1,10 +1,14 @@
 import React, { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { useAuth } from "../contexts/auth-context"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 
 export function RegisterForm() {
+  const navigate = useNavigate()
+  const { register } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -26,12 +30,12 @@ export function RegisterForm() {
     }
 
     try {
-      // Simular registro
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      alert("Registro exitoso")
-      // Aquí iría la redirección o lógica post-registro
+      const result = await register(formData)
+      if (result.success) {
+        navigate("/login")
+      }
     } catch (err) {
-      setError("Error al registrar usuario")
+      setError(err.message || "Error al registrar usuario")
     } finally {
       setIsLoading(false)
     }
@@ -91,6 +95,14 @@ export function RegisterForm() {
               {isLoading ? "Registrando..." : "Registrarse"}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              ¿Ya tienes una cuenta?{" "}
+              <Link to="/login" className="text-blue-600 hover:text-blue-800">
+                Inicia sesión aquí
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

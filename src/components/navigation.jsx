@@ -1,8 +1,12 @@
-import React from 'react'
-import { Calendar, FileText, Users, Home } from "lucide-react"
+import React, { useState } from 'react'
+import { Calendar, FileText, Users, Home, LogOut, ChevronDown } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useAuth } from "../contexts/auth-context"
 
 export function Navigation() {
+  const { logout, user } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,8 +35,31 @@ export function Navigation() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">Sistema Demo</span>
+          <div className="flex items-center">
+            <div className="relative">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 focus:outline-none"
+              >
+                <span className="text-sm text-gray-700">{user?.email || 'Usuario'}</span>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border">
+                  <button
+                    onClick={() => {
+                      logout()
+                      setIsMenuOpen(false)
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

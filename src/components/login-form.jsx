@@ -1,14 +1,19 @@
 import React, { useState } from "react"
+import { Link } from "react-router-dom"
+import { useAuth } from "../contexts/auth-context"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 
 export function LoginForm() {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
+  const [credentials, setCredentials] = useState({
+    email: "",
+    password: "",
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const { login } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -16,9 +21,9 @@ export function LoginForm() {
     setError("")
 
     try {
-      await login(username, password)
+      await login(credentials)
     } catch (err) {
-      setError("Credenciales inválidas")
+      setError(err.message || "Error al iniciar sesión")
     } finally {
       setIsLoading(false)
     }
@@ -34,12 +39,12 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuario</Label>
+              <Label htmlFor="email">Correo Electrónico</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={credentials.email}
+                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
                 required
               />
             </div>
@@ -48,8 +53,8 @@ export function LoginForm() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={credentials.password}
+                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 required
               />
             </div>
@@ -60,8 +65,15 @@ export function LoginForm() {
           </form>
           <div className="mt-4 text-sm text-gray-600">
             <p>Usuarios de prueba:</p>
-            <p>• admin / admin (Administrador)</p>
-            <p>• doctor / doctor (Doctor)</p>
+            <p>• usuario@ejemplo.com / contraseña (Administrador)</p>
+          </div>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              ¿No tienes una cuenta?{" "}
+              <Link to="/register" className="text-blue-600 hover:text-blue-800">
+                Regístrate aquí
+              </Link>
+            </p>
           </div>
         </CardContent>
       </Card>
