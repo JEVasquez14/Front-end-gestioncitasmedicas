@@ -1,68 +1,82 @@
-import React, { useState, useEffect } from "react"
-import { Button } from "./ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Badge } from "./ui/badge"
-import { Calendar, Clock, User, MapPin } from "lucide-react"
-import { AppointmentService } from "../services/AppointmentService"
+import React, { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Calendar, Clock, User, MapPin } from "lucide-react";
+import { AppointmentService } from "../services/AppointmentService";
 
 export function AppointmentsList({ refresh, onRefresh }) {
-  const [appointments, setAppointments] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchAppointments = async () => {
     try {
-      setLoading(true)
-      const data = await AppointmentService.getAllAppointments()
-      setAppointments(data)
+      setLoading(true);
+      const data = await AppointmentService.getAllAppointments();
+      setAppointments(data);
     } catch (error) {
-      console.error("Error fetching appointments:", error)
+      console.error("Error fetching appointments:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchAppointments()
-  }, [refresh])
+    fetchAppointments();
+  }, [refresh]);
 
-  const updateAppointmentStatus = (id, status) => {
+  const updateAppointmentStatus = async (id, status) => {
+    try {
+      setLoading(true);
+      await AppointmentService.updateAppointmentStatus(id, status);
+      const data = await AppointmentService.getAllAppointments();
+      setAppointments(data);
+    } catch (error) {}
     setAppointments((prev) =>
-      prev.map((appointment) => (appointment.id === id ? { ...appointment, status } : appointment)),
-    )
-    onRefresh()
-  }
+      prev.map((appointment) =>
+        appointment.id === id ? { ...appointment, status } : appointment,
+      ),
+    );
+    onRefresh();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
       case "SCHEDULED":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "COMPLETED":
-        return "bg-green-100 text-green-800"
-      case "CANCELLED":
-        return "bg-red-100 text-red-800"
+        return "bg-green-100 text-green-800";
+      case "CANCELED":
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getStatusText = (status) => {
     switch (status) {
       case "SCHEDULED":
-        return "Programada"
+        return "Programada";
       case "COMPLETED":
-        return "Completada"
-      case "CANCELLED":
-        return "Cancelada"
+        return "Completada";
+      case "CANCELED":
+        return "Cancelada";
       default:
-        return status
+        return status;
     }
-  }
+  };
 
   const canModifyAppointment = (appointment) => {
-    const appointmentDate = new Date(appointment.startTime)
-    const now = new Date()
-    return appointmentDate > now && appointment.status === "SCHEDULED"
-  }
+    const appointmentDate = new Date(appointment.startTime);
+    const now = new Date();
+    return appointmentDate > now && appointment.status === "SCHEDULED";
+  };
 
   if (loading) {
     return (
@@ -71,7 +85,7 @@ export function AppointmentsList({ refresh, onRefresh }) {
           <p className="text-gray-500">Cargando citas...</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -96,10 +110,16 @@ export function AppointmentsList({ refresh, onRefresh }) {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{appointment.patientName}</CardTitle>
-                    <CardDescription>{appointment.consultRoomName}</CardDescription>
+                    <CardTitle className="text-lg">
+                      {appointment.patientName}
+                    </CardTitle>
+                    <CardDescription>
+                      {appointment.consultRoomName}
+                    </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(appointment.status)}>{getStatusText(appointment.status)}</Badge>
+                  <Badge className={getStatusColor(appointment.status)}>
+                    {getStatusText(appointment.status)}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -110,15 +130,21 @@ export function AppointmentsList({ refresh, onRefresh }) {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{new Date(appointment.startTime).toLocaleDateString()}</span>
+                    <span className="text-sm">
+                      {new Date(appointment.startTime).toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{new Date(appointment.startTime).toLocaleTimeString()}</span>
+                    <span className="text-sm">
+                      {new Date(appointment.startTime).toLocaleTimeString()}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{appointment.consultRoomName}</span>
+                    <span className="text-sm">
+                      {appointment.consultRoomName}
+                    </span>
                   </div>
                 </div>
 
@@ -127,14 +153,18 @@ export function AppointmentsList({ refresh, onRefresh }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateAppointmentStatus(appointment.id, "COMPLETED")}
+                      onClick={() =>
+                        updateAppointmentStatus(appointment.id, "COMPLETED")
+                      }
                     >
                       Completar
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => updateAppointmentStatus(appointment.id, "CANCELLED")}
+                      onClick={() =>
+                        updateAppointmentStatus(appointment.id, "CANCELED")
+                      }
                     >
                       Cancelar
                     </Button>
@@ -146,5 +176,6 @@ export function AppointmentsList({ refresh, onRefresh }) {
         </div>
       )}
     </div>
-  )
-} 
+  );
+}
+

@@ -1,11 +1,25 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = "http://localhost:8080/api";
 
 export const AppointmentService = {
   getAllAppointments: async () => {
     try {
       const response = await axios.get(`${API_URL}/appointments`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getDoctorAppointments: async (doctorId, date) => {
+    try {
+      const response = await axios.get(`${API_URL}/appointments`, {
+        params: {
+          doctorId,
+          date
+        }
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -19,11 +33,22 @@ export const AppointmentService = {
         doctorId: appointmentData.doctorId,
         consultRoomId: appointmentData.consultRoomId,
         startTime: appointmentData.startTime,
-        endTime: appointmentData.endTime
+        endTime: appointmentData.endTime,
       });
       return response.data;
     } catch (error) {
       throw error;
     }
-  }
+  },
+
+  updateAppointmentStatus: async (id, status) => {
+    try {
+      const response = await axios.put(`${API_URL}/appointments/${id}`, {
+        status,
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

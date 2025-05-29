@@ -5,25 +5,59 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { Clock, User } from "lucide-react"
-import { mockDoctors, mockAppointments } from "../data/mock-data"
+import { DoctorService } from "../services/DoctorService"
+import { AppointmentService } from "../services/AppointmentService"
+import { toast } from 'sonner'
 
 export function DoctorSchedule() {
-  const [selectedDoctorId, setSelectedDoctorId] = useState(mockDoctors[0]?.id.toString() || "")
+  const [doctors, setDoctors] = useState([])
+  const [selectedDoctorId, setSelectedDoctorId] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
   const [appointments, setAppointments] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Cargar lista de doctores
   useEffect(() => {
-    if (selectedDoctorId && selectedDate) {
-      // Filtrar citas por doctor y fecha
-      const filteredAppointments = mockAppointments.filter((appointment) => {
-        const appointmentDate = new Date(appointment.dateTime).toISOString().split("T")[0]
-        return appointment.doctor.id.toString() === selectedDoctorId && appointmentDate === selectedDate
-      })
-      setAppointments(filteredAppointments)
-    }
-  }, [selectedDoctorId, selectedDate])
+    const loadDoctors = async () => {
+      try {
+        const doctorsData = await DoctorService.getAllDoctors();
+        setDoctors(doctorsData);
+        if (doctorsData.length > 0) {
+          setSelectedDoctorId(doctorsData[0].id.toString());
+        }
+      } catch (error) {
+        console.error("Error loading doctors:", error);
+        toast.error("Error al cargar la lista de doctores");
+      }
+    };
 
-  const selectedDoctor = mockDoctors.find((d) => d.id.toString() === selectedDoctorId)
+    loadDoctors();
+  }, []);
+
+  // Cargar citas cuando cambia el doctor o la fecha
+  useEffect(() => {
+    const loadAppointments = async () => {
+      if (!selectedDoctorId || !selectedDate) return;
+
+      setIsLoading(true);
+      try {
+        const appointmentsData = await AppointmentService.getDoctorAppointments(
+          selectedDoctorId,
+          selectedDate
+        );
+        setAppointments(appointmentsData);
+      } catch (error) {
+        console.error("Error loading appointments:", error);
+        toast.error("Error al cargar las citas");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAppointments();
+  }, [selectedDoctorId, selectedDate]);
+
+  const selectedDoctor = doctors.find((d) => d.id.toString() === selectedDoctorId)
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -67,9 +101,9 @@ export function DoctorSchedule() {
                   <SelectValue placeholder="Seleccionar médico" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockDoctors.map((doctor) => (
+                  {doctors.map((doctor) => (
                     <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                      {doctor.name} - {doctor.specialty}
+                      {doctor.fullName} - {doctor.specialty}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -78,16 +112,21 @@ export function DoctorSchedule() {
 
             <div className="space-y-2">
               <Label htmlFor="date">Fecha</Label>
-              <Input id="date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+              <Input 
+                id="date" 
+                type="date" 
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)} 
+              />
             </div>
           </div>
 
           {selectedDoctor && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold">{selectedDoctor.name}</h3>
+              <h3 className="font-semibold">{selectedDoctor.fullName}</h3>
               <p className="text-sm text-gray-600">{selectedDoctor.specialty}</p>
               <p className="text-sm text-gray-600">
-                Horario: {selectedDoctor.workingHours.start} - {selectedDoctor.workingHours.end}
+                Horario: {selectedDoctor.availableFrom} - {selectedDoctor.availableTo}
               </p>
             </div>
           )}
@@ -108,19 +147,21 @@ export function DoctorSchedule() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {appointments.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8 text-gray-500">Cargando citas...</div>
+          ) : appointments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">No hay citas programadas para este día</div>
           ) : (
             <div className="space-y-4">
               {appointments
-                .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                 .map((appointment) => (
                   <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-gray-500" />
                         <span className="font-medium">
-                          {new Date(appointment.dateTime).toLocaleTimeString("es-ES", {
+                          {new Date(appointment.startTime).toLocaleTimeString("es-ES", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -128,11 +169,13 @@ export function DoctorSchedule() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-500" />
-                        <span>{appointment.patient.name}</span>
+                        <span>{appointment.patientName}</span>
                       </div>
-                      <span className="text-sm text-gray-600">{appointment.reason}</span>
+                      <span className="text-sm text-gray-600">{appointment.consultRoomName}</span>
                     </div>
-                    <Badge className={getStatusColor(appointment.status)}>{getStatusText(appointment.status)}</Badge>
+                    <Badge className={getStatusColor(appointment.status)}>
+                      {getStatusText(appointment.status)}
+                    </Badge>
                   </div>
                 ))}
             </div>
