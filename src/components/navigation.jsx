@@ -1,11 +1,21 @@
-import React, { useState } from 'react'
-import { Calendar, FileText, Users, Home, LogOut, ChevronDown } from "lucide-react"
-import { Link } from "react-router-dom"
-import { useAuth } from "../contexts/auth-context"
+import React, { useState } from "react";
+import {
+  Calendar,
+  FileText,
+  Users,
+  Home,
+  LogOut,
+  ChevronDown,
+  UserPlus,
+  User,
+  Building2,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/auth-context";
 
 export function Navigation() {
-  const { logout, user } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { logout, user } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -18,19 +28,50 @@ export function Navigation() {
             </Link>
 
             <div className="flex space-x-4">
-              <Link to="/appointments" className="flex items-center space-x-1 text-gray-700 hover:text-blue-600">
+              <Link
+                to="/appointments"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
                 <Calendar className="h-4 w-4" />
                 <span>Citas</span>
               </Link>
 
-              <Link to="/medical-records" className="flex items-center space-x-1 text-gray-700 hover:text-blue-600">
+              <Link
+                to="/medical-records"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
                 <FileText className="h-4 w-4" />
                 <span>Historiales</span>
               </Link>
 
-              <Link to="/schedule" className="flex items-center space-x-1 text-gray-700 hover:text-blue-600">
+              <Link
+                to="/schedule"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
                 <Users className="h-4 w-4" />
                 <span>Agenda</span>
+              </Link>
+
+              <Link
+                to="/doctors"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
+                <User className="h-4 w-4" />
+                <span>Doctores</span>
+              </Link>
+              <Link
+                to="/patients"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
+                <User className="h-4 w-4" />
+                <span>Pacientes</span>
+              </Link>
+              <Link
+                to="/consult-rooms"
+                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+              >
+                <Building2 className="h-4 w-4" />
+                <span>Consultorios</span>
               </Link>
             </div>
           </div>
@@ -41,7 +82,9 @@ export function Navigation() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 focus:outline-none"
               >
-                <span className="text-sm text-gray-700">{user?.email || 'Usuario'}</span>
+                <span className="text-sm text-gray-700">
+                  {user?.email || "Usuario"}
+                </span>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </button>
 
@@ -49,8 +92,8 @@ export function Navigation() {
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border">
                   <button
                     onClick={() => {
-                      logout()
-                      setIsMenuOpen(false)
+                      logout();
+                      setIsMenuOpen(false);
                     }}
                     className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
                   >
@@ -64,5 +107,5 @@ export function Navigation() {
         </div>
       </div>
     </nav>
-  )
-} 
+  );
+}

@@ -1,156 +1,215 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Textarea } from "./ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { mockDoctors, mockPatients, mockOffices } from "../data/mock-data"
+import { PatientService } from "../services/PacienteService"
+import { DoctorService } from "../services/DoctorService"
+import { AppointmentService } from "../services/AppointmentService"
+import { ConsultRoomService } from "../services/ConsultRoomService"
+import { Toaster } from "./ui/toast"
+import { toast } from 'sonner'
+
+// Mock data solo para consultorios
+const mockOffices = [
+  { id: 1, name: "Consultorio 101", location: "Primer Piso" },
+  { id: 2, name: "Consultorio 102", location: "Primer Piso" },
+  { id: 3, name: "Consultorio 201", location: "Segundo Piso" },
+]
 
 export function AppointmentForm({ onSuccess }) {
   const [isLoading, setIsLoading] = useState(false)
+  const [patients, setPatients] = useState([])
+  const [doctors, setDoctors] = useState([])
+  const [consultRooms, setConsultRooms] = useState([])
   const [formData, setFormData] = useState({
     patientId: "",
     doctorId: "",
-    officeId: "",
-    dateTime: "",
-    reason: "",
+    consultRoomId: "",
+    startTime: "",
+    endTime: "",
   })
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [patientsData, doctorsData, consultRoomsData] = await Promise.all([
+          PatientService.getAllPatients(),
+          DoctorService.getAllDoctors(),
+          ConsultRoomService.getAllConsultRooms()
+        ]);
+        setPatients(patientsData);
+        setDoctors(doctorsData);
+        setConsultRooms(consultRoomsData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        const errorMessage = error.response?.data?.message || 
+          error.response?.data?.error ||
+          error.message ||
+          "Error desconocido al cargar los datos";
+        toast.error(`Error al cargar los datos: ${errorMessage}`);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simular creación de cita
-    setTimeout(() => {
+    try {
+      await AppointmentService.createAppointment({
+        patientId: Number(formData.patientId),
+        doctorId: Number(formData.doctorId),
+        consultRoomId: Number(formData.consultRoomId),
+        startTime: formData.startTime,
+        endTime: formData.endTime
+      });
+
       setIsLoading(false)
       onSuccess()
       setFormData({
         patientId: "",
         doctorId: "",
-        officeId: "",
-        dateTime: "",
-        reason: "",
+        consultRoomId: "",
+        startTime: "",
+        endTime: "",
       })
-      alert("Cita creada exitosamente")
-    }, 1000)
+      toast.success("Cita creada exitosamente")
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      const errorMessage = error.response?.data?.message || 
+        error.response?.data?.error ||
+        error.message ||
+        "Error desconocido al crear la cita";
+      
+      // Mensajes específicos para errores comunes
+      let userMessage = "Error al crear la cita: ";
+      if (errorMessage.includes("overlap") || errorMessage.includes("conflicto")) {
+        userMessage += "Ya existe una cita programada en ese horario";
+      } else if (errorMessage.includes("availability") || errorMessage.includes("disponibilidad")) {
+        userMessage += "El doctor no está disponible en ese horario";
+      } else if (errorMessage.includes("past") || errorMessage.includes("pasado")) {
+        userMessage += "No se pueden crear citas en fechas pasadas";
+      } else {
+        userMessage += errorMessage;
+      }
+      
+      toast.error(userMessage);
+      setIsLoading(false);
+    }
   }
 
-  const validateDateTime = (dateTime, doctorId) => {
-    if (!dateTime || !doctorId) return true
-
-    const selectedDate = new Date(dateTime)
-    const selectedDoctor = mockDoctors.find((d) => d.id.toString() === doctorId)
-
-    if (!selectedDoctor) return false
-
-    const selectedTime = selectedDate.toTimeString().slice(0, 5)
-    const { start, end } = selectedDoctor.workingHours
-
-    return selectedTime >= start && selectedTime <= end
+  const validateDateTime = (startTime, endTime, doctorId) => {
+    if (!startTime || !endTime || !doctorId) return true
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    return start < end
   }
 
-  const isDateTimeValid = validateDateTime(formData.dateTime, formData.doctorId)
+  const isDateTimeValid = validateDateTime(formData.startTime, formData.endTime, formData.doctorId)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Nueva Cita Médica</CardTitle>
-        <CardDescription>Programa una nueva cita médica para un paciente</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="patient">Paciente</Label>
-              <Select
-                value={formData.patientId}
-                onValueChange={(value) => setFormData({ ...formData, patientId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockPatients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id.toString()}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+    <>
+      <Toaster />
+      <Card>
+        <CardHeader>
+          <CardTitle>Nueva Cita Médica</CardTitle>
+          <CardDescription>Programa una nueva cita médica para un paciente</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="patient">Paciente</Label>
+                <Select
+                  value={formData.patientId}
+                  onValueChange={(value) => setFormData({ ...formData, patientId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar paciente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id.toString()}>
+                        {patient.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="doctor">Doctor</Label>
+                <Select
+                  value={formData.doctorId}
+                  onValueChange={(value) => setFormData({ ...formData, doctorId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doctors.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                        {doctor.fullName} - {doctor.specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="doctor">Doctor</Label>
-              <Select
-                value={formData.doctorId}
-                onValueChange={(value) => setFormData({ ...formData, doctorId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockDoctors.map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                      {doctor.name} - {doctor.specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="office">Consultorio</Label>
+                <Select
+                  value={formData.consultRoomId}
+                  onValueChange={(value) => setFormData({ ...formData, consultRoomId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar consultorio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {consultRooms.map((room) => (
+                      <SelectItem key={room.id} value={room.id.toString()}>
+                        {room.name} - {room.location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Horario de la Cita</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    required
+                  />
+                  <Input
+                    type="datetime-local"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    required
+                  />
+                </div>
+                {!isDateTimeValid && formData.startTime && formData.endTime && (
+                  <p className="text-red-600 text-sm">La hora de fin debe ser posterior a la hora de inicio</p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="office">Consultorio</Label>
-              <Select
-                value={formData.officeId}
-                onValueChange={(value) => setFormData({ ...formData, officeId: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar consultorio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockOffices.map((office) => (
-                    <SelectItem key={office.id} value={office.id.toString()}>
-                      {office.name} - {office.location}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dateTime">Fecha y Hora</Label>
-              <Input
-                id="dateTime"
-                type="datetime-local"
-                value={formData.dateTime}
-                onChange={(e) => setFormData({ ...formData, dateTime: e.target.value })}
-                required
-              />
-              {!isDateTimeValid && formData.dateTime && formData.doctorId && (
-                <p className="text-red-600 text-sm">La hora debe estar dentro del horario laboral del médico</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">Motivo de la consulta</Label>
-            <Textarea
-              id="reason"
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              placeholder="Describe el motivo de la consulta..."
-              required
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isLoading || !isDateTimeValid}>
-            {isLoading ? "Creando cita..." : "Crear Cita"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            <Button type="submit" className="w-full" disabled={isLoading || !isDateTimeValid}>
+              {isLoading ? "Creando cita..." : "Crear Cita"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </>
   )
 } 

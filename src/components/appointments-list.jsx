@@ -1,12 +1,29 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { Calendar, Clock, User, MapPin } from "lucide-react"
-import { mockAppointments } from "../data/mock-data"
+import { AppointmentService } from "../services/AppointmentService"
 
 export function AppointmentsList({ refresh, onRefresh }) {
-  const [appointments, setAppointments] = useState(mockAppointments)
+  const [appointments, setAppointments] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true)
+      const data = await AppointmentService.getAllAppointments()
+      setAppointments(data)
+    } catch (error) {
+      console.error("Error fetching appointments:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAppointments()
+  }, [refresh])
 
   const updateAppointmentStatus = (id, status) => {
     setAppointments((prev) =>
@@ -42,16 +59,26 @@ export function AppointmentsList({ refresh, onRefresh }) {
   }
 
   const canModifyAppointment = (appointment) => {
-    const appointmentDate = new Date(appointment.dateTime)
+    const appointmentDate = new Date(appointment.startTime)
     const now = new Date()
     return appointmentDate > now && appointment.status === "SCHEDULED"
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="text-center py-8">
+          <p className="text-gray-500">Cargando citas...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Lista de Citas</h2>
-        <Button onClick={onRefresh} variant="outline">
+        <Button onClick={fetchAppointments} variant="outline">
           Actualizar
         </Button>
       </div>
@@ -69,8 +96,8 @@ export function AppointmentsList({ refresh, onRefresh }) {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{appointment.patient.name}</CardTitle>
-                    <CardDescription>{appointment.reason}</CardDescription>
+                    <CardTitle className="text-lg">{appointment.patientName}</CardTitle>
+                    <CardDescription>{appointment.consultRoomName}</CardDescription>
                   </div>
                   <Badge className={getStatusColor(appointment.status)}>{getStatusText(appointment.status)}</Badge>
                 </div>
@@ -79,19 +106,19 @@ export function AppointmentsList({ refresh, onRefresh }) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{appointment.doctor.name}</span>
+                    <span className="text-sm">{appointment.doctorName}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{new Date(appointment.dateTime).toLocaleDateString()}</span>
+                    <span className="text-sm">{new Date(appointment.startTime).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{new Date(appointment.dateTime).toLocaleTimeString()}</span>
+                    <span className="text-sm">{new Date(appointment.startTime).toLocaleTimeString()}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{appointment.office.name}</span>
+                    <span className="text-sm">{appointment.consultRoomName}</span>
                   </div>
                 </div>
 

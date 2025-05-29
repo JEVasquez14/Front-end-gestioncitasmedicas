@@ -8,6 +8,9 @@ import Schedule from './pages/Schedule'
 import LandingPage from './pages/LandingPage'
 import { LoginForm } from './components/login-form'
 import { RegisterForm } from './components/register-form'
+import Doctor from './pages/Doctor'
+import Patient from './pages/Patient'
+import ConsultRoom from './pages/ConsultRoom'
 
 function App() {
   return (
@@ -49,6 +52,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Schedule />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctors"
+            element={
+              <ProtectedRoute>
+                <Doctor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients"
+            element={
+              <ProtectedRoute>
+                <Patient />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/consult-rooms"
+            element={
+              <ProtectedRoute>
+                <ConsultRoom />
               </ProtectedRoute>
             }
           />

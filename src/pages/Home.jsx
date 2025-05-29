@@ -2,7 +2,7 @@ import React from 'react'
 
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, FileText, Clock } from "lucide-react"
+import { Calendar, FileText, Clock, User, Building2 } from "lucide-react"
 
 function Home() {
   return (
@@ -60,6 +60,48 @@ function Home() {
               </CardContent>
             </Card>
           </a>
+          <a href="/doctors">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                <User className="h-6 w-6 text-indigo-600" />
+                  <CardTitle>Doctores</CardTitle>
+                </div>
+                <CardDescription>Registrar nuevo personal médico</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Añade nuevos doctores al sistema clínico</p>
+              </CardContent>
+            </Card>
+          </a>
+          <a href="/patients">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <User className="h-6 w-6 text-indigo-600" />
+                  <CardTitle>Pacientes</CardTitle>
+                </div>
+                <CardDescription>Registrar nuevo paciente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Añade nuevos pacientes al sistema clínico</p>
+              </CardContent>
+            </Card>
+          </a>
+          <a href="/consult-rooms">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-6 w-6 text-orange-600" />
+                  <CardTitle>Consultorios</CardTitle>
+                </div>
+                <CardDescription>Gestionar consultorios médicos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Administra los consultorios de la clínica</p>
+              </CardContent>
+            </Card>
+          </a>
         </div>
 
         <div className="mt-8">
@@ -97,12 +139,12 @@ function Home() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-3 text-orange-600">Datos Demo</h3>
+                  <h3 className="font-semibold mb-3 text-orange-600">Consultorios</h3>
                   <ul className="text-sm text-gray-600 space-y-2">
-                    <li>• 5 médicos especialistas</li>
-                    <li>• 6 pacientes registrados</li>
-                    <li>• 5 consultorios disponibles</li>
-                    <li>• Citas de ejemplo programadas</li>
+                    <li>• Gestión de consultorios</li>
+                    <li>• Asignación de pisos</li>
+                    <li>• Información detallada</li>
+                    <li>• Estado y disponibilidad</li>
                   </ul>
                 </div>
               </div>
